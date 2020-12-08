@@ -1,0 +1,129 @@
+\documentclass[8pt]{beamer}
+
+\mode<presentation> {
+    \usetheme{Warsaw}}
+\usepackage{tikz}
+\usepackage{bbm}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{bookmark}
+\usepackage{tikz-cd}
+\usepackage{svg}
+\usepackage[cache=false]{minted} 
+%\newtheorem{theorem}{Theorem}
+\newtheorem{prop}{Proposition}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{definition}{Definition}
+%\newtheorem{example}{Example}
+\newtheorem{question}{Question}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newcommand\floor[1]{\lfloor\#1\rfloor}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\title {The Crust of Rust -- Move Semantics, Initialization, and the Builder Pattern}
+\author{Varoon Pazhyanur}
+\institute{Bloomberg L.P.}
+\date{13 November 2020}
+\usepackage{hyperref}
+\hypersetup{
+        colorlinks=true,
+        linkcolor=red,
+        filecolor=magenta,      
+        urlcolor=blue,
+    }
+\begin{document}
+    \begin{frame}
+        \titlepage 
+    \end{frame}
+    \begin{frame}[fragile]
+        In CPP the \href{https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines\#S-ctor}{Rule of 5} (or 0,3,6,7, etc. depending on whom and when one
+        asks) is the lifeblood of RAII and how CPP relates objects and memory.
+        The CPP Core guidelines dedicate many subsequent clarifications. For
+        example, one should prefer the compiler-generated defaults unless there
+        is a good reason to do otherwise (C.20), IN particular, the destructor
+        (C.37) and move operations (C.66) should be noexcept. Every class X
+        must have the following:
+
+        \begin{minted}[frame=single]{cpp}
+
+            class X{
+                X(const X&)=default;
+                operator=(const X&)=default;
+                X(X&&)=default;
+                X& operator=(X&&)=default;
+                ~X()=default; 
+            }
+        \end{minted}
+        The Rust analog of the destructor is the Drop trait, which we ignore
+        for now. The two ampersands denote an r value reference, a language
+        construct introduced in CPP11 to tag a reference as being temporary in
+        some sense. The move constructor and move assignment operators leave
+        the input in a valid but unspecified state, meaning that all class
+        invariants must be preserved. In particular, move semantics typically
+        involves moving identities (pointers and references) or scopes, rather
+        than values (I try to clear my data structures explicitly after moving
+        out of them). Copy constructing a set, for example, might invoke a copy
+        for every node. Move constructing a set, by contrast, may only involve
+        calling std::swap on nullptr and a pointer to the root node of a tree
+        (plus some minor clean up to preserve set invariants). 
+    \end{frame}
+    \begin{frame}
+        \frametitle{Motivating Examples}
+        Our code frequently chains operations on data structures especially
+        with unary and binary functions, so we can focus on those. E.x.
+        Pandas dataframes, matrices/ndarrays, sets, maps. While copying an
+        integer may be ok, needlessly copying entire matrices or dataframes
+        can kill performance. CPP and Rust in particular have relatively
+        thorough and high level semantics for explicitly controlling when
+        to copy and when to "steal" an data structure's contents. Rust's
+        ownership sustem helps to avoid common bugs and adhere to many of
+        the CPP Core Guidelines.   
+        \begin{enumerate}
+            \item Consider the operation of merging/unioning two sets, both
+                ordered or unordered. As of CPP17, one can merge a set into
+                another set by copying or moving.
+                \href{https://en.cppreference.com/w/cpp/container/set/merge.}{std::set.merge}. The
+                merge method on std::map is similar.  
+            \item One can move to \href{https://en.cppreference.com/w/cpp/container/vector/push_back}{push pack} into a vector
+                 or
+                 \href{https://en.cppreference.com/w/cpp/container/vector/insert}{insert} many elements into a vector. See
+                overload 2.  
+            \item std::move is a static cast to an r value reference and can
+                frequently be used to force move semantics.
+            \item Lambdas can use move semantics as of CPP14 with the help of
+                std::move.
+        \end{enumerate}
+    \end{frame}
+    \begin{frame}
+            \frametitle{Move Semantics in Rust}
+            In Rust, function parameters move by default, mimicing passing by r
+            value reference from CPP. While it was a CPP convention to never
+            access a variable after it has been moved out of, the borrow
+            checker turns using an identity after it has been moved a compile
+            time error. This permits safe, frequent move semantics. See, for
+            example, 
+            \begin{enumerate}
+                \item \href{https://docs.rs/hyper/0.13.9/hyper/server/struct.Builder.html}{hyper::server::Builder} v0.13.9
+                \item \href{https://docs.rs/reqwest/0.10.9/reqwest/struct.RequestBuilder.html}{reqwest::RequestBuilder} v0.10.9                
+                \item \href{https://docs.amethyst.rs/stable/amethyst/struct.GameDataBuilder.html}{amethyst::GameDataBuilder} v0.15.3
+                \item \href{https://docs.rs/rayon/1.5.0/rayon/struct.ThreadPoolBuilder.html}{rayon::ThreadPoolBuilder} v1.5.0
+                \item arrow::csv::reader::ReaderBuilder v2.0.0
+                https://docs.rs/arrow/2.0.0/arrow/csv/reader/struct.ReaderBuilder.html
+                \item clap::App v2.33.3
+                \href{https://docs.rs/clap/2.33.3/clap/struct.App.html}{text}
+                \item mysql::OptsBuilder v20.1.0
+                \href{https://docs.rs/mysql/20.1.0/mysql/struct.OptsBuilder.html}{text}
+            \end{enumerate} 
+
+            Other important uses of move semantics in Rust include the folliwng.
+
+            \begin{enumerate}
+                \item The primary conversion traits std::convert::From \href{https://doc.rust-lang.org/std/convert/trait.From.html\#tymethod.from}{text} and std::convert::TryFrom \href{https://doc.rust-lang.org/std/convert/trait.TryFrom.html\#tymethod.try_from}{text}. 
+            \end{enumerate}
+    \end{frame}
+\end{document}
