@@ -3,4 +3,4 @@ authors = ["varoon"]
 language = "en"
 multilingual = false
 src = "src"
-title = "Move Semantics, Initialization, and the Builder Pattern"
+title = "The Crust of Rust"
