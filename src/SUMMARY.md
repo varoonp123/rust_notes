@@ -1,6 +1,6 @@
 # Summary
 
-- [Introduction](./empty.md)
+- [Introduction](./introduction/target_problems.md)
 - [Move Semantics, Initialization, and the Builder Pattern](./crust_rust_move_builder..md)
   - [Initialization: The Tip of an Iceberg](./initialization_basics.md)
   - [Move Semantics:  What They Are and Why You Should
