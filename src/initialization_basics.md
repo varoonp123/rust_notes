@@ -1,6 +1,6 @@
 # Initialization in Rust: A Quick Guide
 
-Every initialization of a struct accomplishes much beyond merely allocating some
+The following assumes that one is reasonably familar with Every initialization of a struct accomplishes much beyond merely allocating some
 data and managing pointers. While I make a distinction between "value" and
 "identities", one should recall that identities can be values in another
 context. For example, many smart pointers behave this way.
@@ -30,7 +30,7 @@ complicated by inheritance. We will come back to this. In Rust, the situation is
 simpler. 
 
 
-[Relevant](./gump_cpp_initialization.gif)
+![Relevant](./gump_cpp_initialization.gif)
 
 ### Struct initialization
 
