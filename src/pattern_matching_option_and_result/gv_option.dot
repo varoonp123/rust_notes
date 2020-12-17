@@ -1,0 +1,40 @@
+
+digraph {
+    ranksep=2.5;
+    nodesep=1;
+    orientation=portrait;
+
+    edge [fontsize=14, arrowsize=.6,constraint=true]
+    node [rank=same, fontsize=14]
+    {rank=same;T; W;Z}
+    node [shape=box];
+    {rank=same;OT; OW;OZ}
+    OT [label="Option<T>"]
+    OW [label="Option<W>"];
+    OZ [label="Option<Z>"];
+    # Givens
+    edge [fontcolor=blue, color=blue]
+    T->W [label = <<B>f</B>> ];
+    W->Z [label = <<B>g</B>> ];
+    T->OW [dir=ba,label = <<B>f_? </B>>,  labeldistance=1.4 ];
+
+    edge [fontcolor=black, color=black]
+    # Loops. Boolean algebra ops on Option types
+
+    OT:s -> OT:s [label=".xor(t_?)",labeldistance=3.0]
+    OW:s -> OW:s [label=".and(w_?)"]
+    OZ:s -> OZ:s [label=".or(z_?)"]
+    T:s->OT:n [dir=forward, xlabel = "Some", weight=99];
+
+    OW:ne->Z:sw [label=".map_or(z,g)", weight=99]
+    OT->OW [label=".and_then(f)"]
+    OW->OZ [label=".map(g)"]
+    OT:w->T:w [xlabel = ".unwrap_or_default(t)  "];
+
+    OW-> W [label=".unwrap_or(w)", weight=999];
+    OZ->Z [label = <<B>.unwrap() </B>>, fontcolor="red", fontcolor=red, weight=99, samehead="zsouth"];
+    OZ:e->Z:e [label = <<B>.expect('message') </B>>, fontcolor=red, weight=99];
+
+
+}
+
